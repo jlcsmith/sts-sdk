@@ -90,6 +90,12 @@ public class StsClientTest {
                         .toURI()
                         .getPath());
         System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
+        System.setProperty("javax.net.ssl.trustStoreType", "JKS");
+        System.setProperty("javax.net.ssl.trustStore",
+                getClass().getResource("/serverTruststore.jks")
+                        .toURI()
+                        .getPath());
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
        // System.setProperty("ddf.home", "/ddf/home");
         System.setProperty("org.codice.ddf.system.hostname", "localhost");
     }
@@ -385,8 +391,8 @@ public class StsClientTest {
 
         // Create a Username Token
         UsernameToken oboToken = new UsernameToken(false, doc, WSConstants.PASSWORD_TEXT);
-        oboToken.setName("pangerer");
-        oboToken.setPassword("password");
+        oboToken.setName("admin");
+        oboToken.setPassword("admin");
         return oboToken.getElement();
     }
 
