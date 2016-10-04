@@ -112,8 +112,8 @@ public class StsClientTest {
         System.setProperty("jdk.tls.ephemeralDHKeySize", "matched");
         System.setProperty("https.protocols", "TLSv1.1,TLSv1.2");
         System.setProperty("jdk.tls.client.protocols", "TLSv1.1,TLSv1.2");
-        System.setProperty("https.cipherSuites", "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,TLS_DHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
-
+        System.setProperty("https.cipherSuites",
+                "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,TLS_DHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
 
     }
 
@@ -210,9 +210,6 @@ public class StsClientTest {
             map.put(SecurityConstants.STS_TOKEN_PROPERTIES, stsProperties);
         }
 
-        LOGGER.debug("Setting callback handler on STSClient");
-
-        LOGGER.debug("Setting STS TOKEN USE CERT FOR KEY INFO to \"true\"");
         map.put(SecurityConstants.STS_TOKEN_USE_CERT_FOR_KEYINFO, "true");
 
         LOGGER.debug("Adding in realm information to the STSClient");
@@ -253,26 +250,6 @@ public class StsClientTest {
         Element claimsElement = null;
         List<String> claims = new ArrayList<>();
         claims.addAll(Arrays.asList(CLAIMS));
-        // @formatter:off
-
-/**  TODO - do we need claims from policy mgr?
- *
- *
-        if (contextPolicyManager != null) {
-            Collection<ContextPolicy> contextPolicies = contextPolicyManager.getAllContextPolicies();
-            Set<String> attributes = new LinkedHashSet<>();
-            if (contextPolicies != null && contextPolicies.size() > 0) {
-                for (ContextPolicy contextPolicy : contextPolicies) {
-                    attributes.addAll(contextPolicy.getAllowedAttributeNames());
-                }
-            }
-
-            if (attributes.size() > 0) {
-                claims.addAll(attributes);
-            }
-        }
- */
-        // @formatter:on
 
         if (claims.size() != 0) {
             W3CDOMStreamWriter writer = null;
