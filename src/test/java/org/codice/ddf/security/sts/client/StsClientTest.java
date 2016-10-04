@@ -1,22 +1,41 @@
-package ddf.security.realm.sts;
+/**
+ * Copyright (c) Codice Foundation
+ * <p>
+ * This is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser
+ * General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ * <p>
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details. A copy of the GNU Lesser General Public License
+ * is distributed along with this program and can be found at
+ * <http://www.gnu.org/licenses/lgpl.html>.
+ **/
 
+package org.codice.ddf.security.sts.client;
+
+import static org.apache.wss4j.policy.SPConstants.SPVersion.SP11;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-//import static org.junit.Assert.assertThat;
-//import static org.hamcrest.Matchers.notNullValue;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
 
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.bus.CXFBusFactory;
@@ -26,30 +45,22 @@ import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.tokenstore.SecurityToken;
 import org.apache.cxf.ws.security.trust.STSClient;
 import org.apache.cxf.ws.security.trust.STSUtils;
+import org.apache.neethi.Policy;
 import org.apache.shiro.authc.AuthenticationException;
-import org.codice.ddf.security.common.Security;
-import org.junit.experimental.theories.internal.ParameterizedAssertionError;
-import java.net.URISyntaxException;
+import org.apache.wss4j.dom.WSConstants;
+import org.apache.wss4j.dom.message.token.UsernameToken;
+import org.apache.wss4j.policy.model.AlgorithmSuite;
+import org.junit.Before;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSSerializer;
-import org.apache.wss4j.dom.WSConstants;
-import javax.xml.parsers.DocumentBuilder;
-import org.apache.wss4j.dom.message.token.UsernameToken;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import ddf.security.PropertiesLoader;
 
 public class StsClientTest {
 
@@ -91,15 +102,13 @@ public class StsClientTest {
                         .getPath());
         System.setProperty("javax.net.ssl.keyStorePassword", "changeit");
         System.setProperty("javax.net.ssl.trustStoreType", "JKS");
-        System.setProperty("javax.net.ssl.trustStore",
-                getClass().getResource("/serverTruststore.jks")
-                        .toURI()
-                        .getPath());
+        System.setProperty("javax.net.ssl.trustStore", getClass().getResource(
+                "/serverTruststore.jks")
+                .toURI()
+                .getPath());
         System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-       // System.setProperty("ddf.home", "/ddf/home");
         System.setProperty("org.codice.ddf.system.hostname", "localhost");
     }
-
 
     @Test
     public void testGetToken() {
@@ -109,13 +118,12 @@ public class StsClientTest {
             LOGGER.info("Retrieving security token...");
             token = requestSecurityToken();
             LOGGER.info("token retrieved {}", token.getId());
-        }catch (Exception e ){
+        } catch (Exception e) {
             LOGGER.error("Unable to get security token", e);
         }
-        assertThat(token,notNullValue());
+        assertThat(token, notNullValue());
 
     }
-
 
     protected Bus getBus() {
         BusFactory bf = new CXFBusFactory();
@@ -149,6 +157,7 @@ public class StsClientTest {
 
         LOGGER.debug("Setting addressing namespace on STSClient: " + ADDRESSING_NAMESPACE);
         stsClient.setAddressingNamespace(ADDRESSING_NAMESPACE);
+        stsClient.setAlgorithmSuite(new AlgorithmSuite(SP11, new Policy()));
 
         return stsClient;
     }
@@ -164,9 +173,9 @@ public class StsClientTest {
         String signaturePropertiesPath = "signature.properties";
         if (signaturePropertiesPath != null && !signaturePropertiesPath.isEmpty()) {
             LOGGER.debug("Setting signature properties on STSClient: " + signaturePropertiesPath);
-            Properties signatureProperties =
-                    PropertiesLoader.loadProperties(signaturePropertiesPath);
-            if(MapUtils.isEmpty(signatureProperties)) {
+            Properties signatureProperties = new PropertiesLoader().loadProperties(
+                    signaturePropertiesPath);
+            if (MapUtils.isEmpty(signatureProperties)) {
                 throw new IllegalArgumentException("Properties are empty");
             }
             map.put(SecurityConstants.SIGNATURE_PROPERTIES, signatureProperties);
@@ -176,9 +185,9 @@ public class StsClientTest {
 
         if (encryptionPropertiesPath != null && !encryptionPropertiesPath.isEmpty()) {
             LOGGER.debug("Setting encryption properties on STSClient: " + encryptionPropertiesPath);
-            Properties encryptionProperties = PropertiesLoader.loadProperties(
+            Properties encryptionProperties = new PropertiesLoader().loadProperties(
                     encryptionPropertiesPath);
-            if(MapUtils.isEmpty(encryptionProperties)) {
+            if (MapUtils.isEmpty(encryptionProperties)) {
                 throw new IllegalArgumentException("Properties are empty");
             }
             map.put(SecurityConstants.ENCRYPT_PROPERTIES, encryptionProperties);
@@ -187,8 +196,8 @@ public class StsClientTest {
         String stsPropertiesPath = "signature.properties";
         if (stsPropertiesPath != null && !stsPropertiesPath.isEmpty()) {
             LOGGER.debug("Setting sts properties on STSClient: " + stsPropertiesPath);
-            Properties stsProperties = PropertiesLoader.loadProperties(stsPropertiesPath);
-            if(MapUtils.isEmpty(stsProperties)) {
+            Properties stsProperties = new PropertiesLoader().loadProperties(stsPropertiesPath);
+            if (MapUtils.isEmpty(stsProperties)) {
                 throw new IllegalArgumentException("Properties are empty");
             }
             map.put(SecurityConstants.STS_TOKEN_PROPERTIES, stsProperties);
@@ -227,9 +236,7 @@ public class StsClientTest {
 
     private void setClaimsOnStsClient(STSClient stsClient, Element claimsElement) {
         if (claimsElement != null) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(" Setting STS claims to:\n" + this.getFormattedXml(claimsElement));
-            }
+            LOGGER.info(" Setting STS claims to:\n" + this.getFormattedXml(claimsElement));
 
             stsClient.setClaims(claimsElement);
         }
@@ -241,7 +248,7 @@ public class StsClientTest {
         claims.addAll(Arrays.asList(CLAIMS));
         // @formatter:off
 
-/**  TODO - is this needed?
+/**  TODO - do we need claims from policy mgr?
  *
  *
         if (contextPolicyManager != null) {
@@ -300,10 +307,8 @@ public class StsClientTest {
                 }
             }
 
-            if (LOGGER.isDebugEnabled()) {
-                if (claimsElement != null) {
-                    LOGGER.debug("\nClaims:\n" + getFormattedXml(claimsElement));
-                }
+            if (claimsElement != null) {
+                LOGGER.info("\nClaims:\n" + getFormattedXml(claimsElement));
             }
         } else {
             LOGGER.debug("There are no claims to process.");
@@ -343,9 +348,7 @@ public class StsClientTest {
 
         setClaimsOnStsClient(stsClient, createClaimsElement());
 
-        if (LOGGER.isDebugEnabled()) {
-            logStsClientConfiguration(stsClient);
-        }
+        logStsClientConfiguration(stsClient);
 
         return stsClient;
     }
@@ -366,7 +369,6 @@ public class StsClientTest {
                         "Telling the STS to request a security token on behalf of the auth token");
                 STSClient stsClient = configureStsClient();
 
-                stsClient.setWsdlLocation(STS_ENDPOINT_ADDRESS);
                 stsClient.setOnBehalfOf(authToken);
                 stsClient.setTokenType(SAML2_ASSERTION_TYPE);
                 stsClient.setKeyType(BEARER_ASSERTION);
@@ -377,14 +379,14 @@ public class StsClientTest {
         } catch (Exception e) {
             String msg = "Error requesting the security token from STS at: " + STS_ENDPOINT_ADDRESS
                     + ".";
-//            LOGGER.debug(msg, e);
+            //            LOGGER.debug(msg, e);
             throw new AuthenticationException(msg, e);
         }
 
         return token;
     }
 
-    private Element createBasicTokenOnBehalfOf() throws ParserConfigurationException{
+    private Element createBasicTokenOnBehalfOf() throws ParserConfigurationException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.newDocument();
@@ -394,6 +396,63 @@ public class StsClientTest {
         oboToken.setName("admin");
         oboToken.setPassword("admin");
         return oboToken.getElement();
+    }
+
+    public final class PropertiesLoader {
+
+        public <K, V> Map<K, V> toMap(Properties properties) {
+            if (properties == null) {
+                return new HashMap();
+            } else {
+                Set entries = properties.entrySet();
+                HashMap map = new HashMap(entries.size() * 2);
+                Iterator var3 = entries.iterator();
+
+                while (var3.hasNext()) {
+                    Map.Entry entry = (Map.Entry) var3.next();
+                    map.put(entry.getKey(), entry.getValue());
+                }
+
+                return map;
+            }
+        }
+
+        public Properties loadProperties(String propertiesFile) {
+            return loadProperties(propertiesFile, (ClassLoader) null);
+        }
+
+        public Properties loadProperties(String propertiesFile, ClassLoader classLoader) {
+            boolean error = false;
+            Properties properties = new Properties();
+            if (propertiesFile != null) {
+                try {
+                    LOGGER.debug(
+                            "Attempting to load properties from {} with Spring PropertiesLoaderUtils.",
+                            propertiesFile);
+                    properties = PropertiesLoaderUtils.loadAllProperties(propertiesFile);
+                } catch (IOException var39) {
+                    error = true;
+                    LOGGER.debug("Unable to load properties using default Spring properties loader.",
+                            var39);
+                }
+
+                Properties filtered2 = new Properties();
+                Iterator e2 = properties.entrySet()
+                        .iterator();
+
+                while (e2.hasNext()) {
+                    Map.Entry entry1 = (Map.Entry) e2.next();
+                    filtered2.put(StrSubstitutor.replaceSystemProperties(entry1.getKey()),
+                            StrSubstitutor.replaceSystemProperties(entry1.getValue()));
+                }
+
+                properties = filtered2;
+            } else {
+                LOGGER.debug("Properties file must not be null.");
+            }
+
+            return properties;
+        }
     }
 
 }
