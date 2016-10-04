@@ -113,7 +113,7 @@ public class StsClientTest {
         System.setProperty("https.protocols", "TLSv1.1,TLSv1.2");
         System.setProperty("jdk.tls.client.protocols", "TLSv1.1,TLSv1.2");
         System.setProperty("https.cipherSuites", "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,TLS_DHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256");
-        
+
 
     }
 
