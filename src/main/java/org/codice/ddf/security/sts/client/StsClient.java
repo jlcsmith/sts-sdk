@@ -84,7 +84,8 @@ public class StsClient {
                     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
                     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
                     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
-                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"};
+                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
+                    "CountryOfAffiliation"};
 
     private String stsEndpointAddress = null;
 
